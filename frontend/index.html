@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BudgetWise</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --navy: #1a2238;
+            --gold: #ffffff;
+            --white: #f5f6fa;
+            --gray: #e0e1e6;
+            --accent: #283655;
+        }
+        body {
+            background: var(--white);
+            color: var(--navy);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: var(--navy);
+            color: var(--gold);
+            padding: 1.5em 0 1em 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(26,34,56,0.08);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+        header p {
+            margin: 0.5em 0 0 0;
+            font-size: 1.1em;
+            color: var(--gray);
+            letter-spacing: 1px;
+        }
+        main {
+            max-width: 700px;
+            margin: 2em auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(26,34,56,0.07);
+            padding: 2em 2em 2em 2em;
+        }
+        h2 {
+            color: var(--navy);
+            border-left: 5px solid var(--gold);
+            padding-left: 0.5em;
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+            font-size: 1.3em;
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1em;
+            align-items: center;
+            margin-bottom: 1.5em;
+        }
+        form input, form select, form button {
+            padding: 0.6em 1em;
+            border-radius: 6px;
+            border: 1px solid var(--gray);
+            font-size: 1em;
+        }
+        form button {
+            background: var(--gold);
+            color: var(--navy);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        form button:hover {
+            background: #e6c200;
+        }
+        #summary {
+            background: var(--navy);
+            color: var(--gold);
+            border-radius: 8px;
+            padding: 1em;
+            margin-bottom: 1.5em;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+            background: var(--white);
+        }
+        th, td {
+            padding: 0.8em 0.5em;
+            text-align: left;
+        }
+        th {
+            background: var(--navy);
+            color: var(--gold);
+            font-weight: 600;
+            border-bottom: 2px solid var(--gold);
+        }
+        tr:nth-child(even) {
+            background: var(--gray);
+        }
+        tr:hover {
+            background: #f0e6c6;
+        }
+        .delete-btn {
+            background: none;
+            border: 1px solid var(--gold);
+            color: var(--navy);
+            padding: 0.4em 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, color 0.2s;
+        }
+        .delete-btn:hover {
+            background: var(--gold);
+            color: var(--navy);
+        }
+        @media (max-width: 600px) {
+            main { padding: 1em; }
+            form { flex-direction: column; gap: 0.5em; }
+            #summary { flex-direction: column; gap: 0.5em; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>BudgetWise</h1>
+        <p>Track your finances in a simple way</p>
+    </header>
+    <main>
+        <h2>Add Item</h2>
+        <form id="addForm">
+            <select id="type">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+            <input type="number" id="amount" placeholder="Amount" required>
+            <input type="text" id="description" placeholder="Description">
+            <input type="date" id="date">
+            <button type="submit">Add</button>
+        </form>
+
+        <h2>Summary</h2>
+        <div id="summary">Loading...</div>
+
+        <h2>Items</h2>
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </main>
+    <script>
+        const API_BASE = "https://a4avzymjj2.execute-api.us-east-1.amazonaws.com/dev/items";
+
+        async function fetchSummary() {
+            const res = await fetch(`${API_BASE}/summary`);
+            const data = await res.json();
+            document.getElementById('summary').innerHTML =
+                `<span><strong>Income:</strong> $${data.total_income}</span>
+                 <span><strong>Expense:</strong> $${data.total_expense}</span>
+                 <span><strong>Balance:</strong> $${data.balance}</span>`;
+        }
+
+        async function fetchItems() {
+            const res = await fetch(API_BASE);
+            const items = await res.json();
+            const tbody = document.querySelector('#itemsTable tbody');
+            tbody.innerHTML = '';
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</td>
+                    <td>$${item.amount}</td>
+                    <td>${item.description}</td>
+                    <td>${item.date}</td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteItem('${item.item_id}')">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteItem(item_id) {
+            await fetch(`${API_BASE}/${item_id}`, { method: 'DELETE' });
+            fetchItems();
+            fetchSummary();
+        }
+
+        document.getElementById('addForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const type = document.getElementById('type').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+            const date = document.getElementById('date').value;
+            await fetch(API_BASE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, amount, description, date })
+            });
+            document.getElementById('addForm').reset();
+            fetchItems();
+            fetchSummary();
+        });
+
+        // Initial load
+        fetchItems();
+        fetchSummary();
+    </script>
+</body>
+</html>

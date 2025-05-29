@@ -41,10 +41,6 @@ git clone https://github.com/NateDominguez-21/aws-budget-tool.git
 2. Deploy the Lambda functions and set up API Gateway as described in the backend folder.
 3. Open `frontend/index.html` in your browser, or host it on S3 for public access.
 
-## Branding
-
-This project uses a navy blue and gold color scheme and is branded as **BudgetWise**. You can customize the branding to fit your needs.
-
 ---
 
 This project was built using AWS Lambda, API Gateway, DynamoDB, and a modern web UI.
